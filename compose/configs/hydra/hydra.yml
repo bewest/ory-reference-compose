@@ -5,9 +5,10 @@ serve:
 urls:
     self:
         issuer: http://127.0.0.1:4444
-    consent: http://kratos-selfservice-ui-node.service.consul:4435/auth/consent
-    login: http://kratos-selfservice-ui-node.service.consul:4435/auth/login
-    logout: http://kratos-selfservice-ui-node.service.consul:4435/auth/logout
+    consent: http://127.0.0.1:4455/auth/hydra/consent
+    login: http://127.0.0.1:4455/auth/hydra/login
+    logout: http://127.0.0.1:4455/auth/hydra/logout
+    error: http://127.0.0.1:4455/error
     #consent: http://consent.service.consul:4420/consent
     #login: http://consent.service.consul:4420/login
     #logout: http://consent.service.consul:4420/logout

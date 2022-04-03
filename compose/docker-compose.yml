@@ -90,17 +90,35 @@ services:
             SERVICE_4420_NAME: consent
         networks:
             - ory
+    hydra-consumer:
+        image: oryd/hydra
+        command:
+            token user --port 9010 --scope openid,offline --redirect http://consumer-example.service.consul:9010/callback --no-shutdown --auth-url http://127.0.0.1:4455/oauth2/auth
+            #--redirect http://127.0.0.1:9010/callback
+        environment:
+            OAUTH2_CLIENT_ID: another-consumer-01
+            OAUTH2_CLIENT_SECRET: _XPe12Yo9iDKPlQHphtDQEFYn2
+            HYDRA_URL: http://oathkeeper.service.consul:4455
+        ports:
+          - "9010"
+        labels:
+            SERVICE_NAME: consumer-example
+            SERVICE_9010_NAME: consumer-example
+        networks:
+            - ory
+        
     hydra:
         depends_on:
             - hydra-migrate
         image: oryd/hydra
         restart: unless-stopped
         command:
-            serve -c /etc/config/hydra/hydra.yml all --dangerous-force-http
+            serve -c /etc/config/hydra/hydra.yml all --dangerous-force-http --dangerous-allow-insecure-redirect-urls http://consumer-example.service.consul:9010/callback
         environment:
             DSN: postgres://ory-user:ory-pass@psql:5432/ory-data?sslmode=disable&max_conns=20&max_idle_conns=4
             OIDC_SUBJECT_IDENTIFIERS_SUPPORTED_TYPES: public
             LOG_LEVEL: trace
+            LOG_LEAK_SENSITIVE_VALUES: "true"
         volumes:
             -
                 type: bind
@@ -110,6 +128,10 @@ services:
             - 4444:4444
             - 4445:4445
             - 5555:5555
+        labels:
+            SERVICE_NAME: hydra
+            SERVICE_4444_NAME: hydra
+            SERVICE_4445_NAME: hydra-admin
         networks:
             - ory
 
@@ -179,10 +201,15 @@ services:
         environment:
             - JWKS_URL=http://oathkeeper-api.service.consul:4456/.well-known/jwks.json
             - KRATOS_PUBLIC_URL=http://kratos.service.consul:4433/
+            # http://127.0.0.1:4433/
+            # http://127.0.0.1:4455/.ory/kratos/public/
+            #http://kratos.service.consul:4433/
             - KRATOS_ADMIN_URL=http://kratos-admin.service.consul:4434/
             - KRATOS_BROWSER_URL=http://127.0.0.1:4455/.ory/kratos/public
+            - HYDRA_ADMIN_URL=http://hydra-admin.service.consul:4445/
             - PORT=4435
-            - SECURITY_MODE=jwks
+            #- SECURITY_MODE=jwt
+            - SECURITY_MODE=cookie
             - HYDRA_COOKIE_SECRET=PLEASE-CHANGE-ME-AGAIN
         networks:
             - ory
@@ -195,6 +222,10 @@ services:
         ports:
             - "4436:4436"
             - "4437:4437"
+        labels:
+            SERVICE_NAME: mailslurper
+            SERVICE_4436_NAME: mailslurper
+            SERVICE_1025_NAME: mailslurper
         networks:
             - ory
     
